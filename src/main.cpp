@@ -19,6 +19,31 @@ struct NetworkInterface {
     string mac;
 };
 
+double getUsedRamGB(double& totalRamGB) {
+    ifstream meminfo("/proc/meminfo");
+
+    string key;
+    long long value;
+    string unit;
+
+    long long memTotal = 0;
+    long long memAvailable = 0;
+
+    while (meminfo >> key >> value >> unit) {
+        if (key == "MemTotal:")
+            memTotal = value;
+        else if (key == "MemAvailable:")
+            memAvailable = value;
+
+        if (memTotal && memAvailable)
+            break;
+    }
+
+    totalRamGB = memTotal / (1024.0 * 1024.0);
+
+    return (memTotal - memAvailable) / (1024.0 * 1024.0);
+}
+
 void systemInfo() {
     struct sysinfo si;
     struct utsname u;
@@ -119,13 +144,10 @@ void systemInfo() {
 
     cout << "GATEWAY - " << gateway << endl;
 
-    if (sysinfo(&si) == 0) {
+    double totalRam;
+    double usedRam = getUsedRamGB(totalRam);
 
-        double usedRam = (double)(si.totalram - si.freeram) * si.mem_unit / (1024.0 * 1024 * 1024);
-        double totalRam = (double)si.totalram * si.mem_unit / (1024.0 * 1024 * 1024);
-
-        cout << "\nRAM: " << fixed << setprecision(2) << usedRam << " GB / " << totalRam << " GB" << endl;
-    }
+    cout << "\nRAM: " << fixed << setprecision(2) << usedRam << " GB / " << totalRam << " GB" << endl;
 }
 
 void displayMenu() {
